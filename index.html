@@ -175,6 +175,20 @@
         canvas:active { cursor: grabbing; }
         .bgm { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center;
             padding: 3px 8px; border: 1px solid rgba(100,200,255,0.35); border-radius: 8px; background: rgba(100,200,255,0.06); }
+        #privDlg { position: fixed; inset: 0; z-index: 1100; display: none; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.65); padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+        #privDlg.open { display: flex; }
+        #privDlg .pv-box { position: relative; width: 640px; max-width: 100%; max-height: 100%; overflow-y: auto; box-sizing: border-box;
+            background: rgba(10,15,44,0.98); color: #e8f1ff; border: 1px solid rgba(100,200,255,0.5); border-radius: 10px;
+            padding: 18px 22px 20px; text-align: left; font-size: 13.5px; line-height: 1.8; }
+        #privDlg h2 { font-size: 18px; margin: 0 0 4px; }
+        #privDlg h3 { font-size: 14px; margin: 16px 0 4px; color: #8cc8ff; }
+        #privDlg p, #privDlg ul { margin: 4px 0; } #privDlg ul { padding-left: 1.3em; }
+        #privDlg .pv-date { font-size: 12px; opacity: 0.75; }
+        #privDlg a { color: #8cc8ff; }
+        #privDlg .pv-close { position: sticky; top: 0; float: right; margin: 0 0 6px 8px; }
+        body.light-mode #privDlg .pv-box { background: #fff; color: #222; border-color: #0066cc; }
+        body.light-mode #privDlg h3, body.light-mode #privDlg a { color: #0066cc; }
         .bgm select { padding: 7px 6px; border-radius: 5px; border: 1px solid rgba(100,200,255,0.5); background: rgba(10,15,44,0.6);
             color: #fff; font-size: 12px; max-width: 230px; }
         .bgm input[type=range] { width: 90px; accent-color: #4da3ff; vertical-align: middle; }
@@ -197,6 +211,40 @@
         </div>
         <button id="heroSkip" type="button">スキップ ▶</button>
     </section>
+    <div id="privDlg" role="dialog" aria-modal="true" aria-labelledby="privTitle">
+        <div class="pv-box">
+            <button class="pv-close" id="privClose" type="button">✕ 閉じる</button>
+            <h2 id="privTitle">プライバシーポリシー</h2>
+            <p class="pv-date">制定：2026年10月20日</p>
+            <p>「太陽系周期マップ」（以下「本アプリ」）は、利用者の個人情報を集めない仕組みでつくられています。本アプリでの情報の扱いは、次のとおりです。</p>
+            <h3>1. 集める情報・送信する情報</h3>
+            <ul>
+                <li>氏名・メールアドレス・位置情報などの個人情報を、入力させたり取得したりしません。会員登録や入力フォームもありません。</li>
+                <li>日付の入力や、画面の操作（拡大・移動・再生など）の内容は、お使いの端末の中だけで処理します。外部のサーバーへは送信しません。</li>
+                <li>アクセス解析・広告・外部のトラッキングは使っていません。Cookie（クッキー）も使っていません。</li>
+            </ul>
+            <h3>2. 端末に保存する情報</h3>
+            <p>使い勝手のために、次の設定をお使いのブラウザ内（ローカルストレージ）に保存します。個人を特定する情報ではなく、外部へは送信しません。</p>
+            <ul>
+                <li>画面の明るさの設定（ダークモード／ライトモード）</li>
+                <li>ヘッダーを格納しているかどうか</li>
+                <li>BGMで選んだ曲と音量</li>
+                <li>オープニング画面を見たかどうか（ブラウザを閉じるまで）</li>
+            </ul>
+            <p>また、アプリをオフラインでも開けるよう、画面・画像・アイコンを端末内に保存（キャッシュ）します。これらはブラウザの設定で「サイトデータ（閲覧履歴データ）」を削除すると消せます。</p>
+            <h3>3. コピー・共有ボタン</h3>
+            <p>「コピー」を押すと、日付と本アプリのURLをクリップボードにコピーします。「共有」を押すと、端末の共有機能が開きます。どちらも、押したときだけ動き、内容を本アプリが外部へ自動で送ることはありません。共有先でどう扱われるかは、共有先のサービスの規定にしたがいます。</p>
+            <h3>4. 公開しているサービスの記録</h3>
+            <p>本アプリを公開しているサーバーやホスティングサービスでは、一般的なアクセス記録（IPアドレス、閲覧日時、端末・ブラウザの種類など）が、サービス側の仕組みで残る場合があります。この記録は、本アプリの機能とは別のものです。</p>
+            <h3>5. BGMについて</h3>
+            <p>本アプリのBGM「クラシック音楽1〜6」は、フリー音源サイト「BGMer」の楽曲を使っています。</p>
+            <p>音楽：<a href="https://bgmer.net/" target="_blank" rel="noopener noreferrer">BGMer（https://bgmer.net/）</a></p>
+            <p>楽曲の著作権は、提供元の権利者に帰属します。音源を自作と偽ったり、許可なく販売・配信したりすることはできません。詳しくは<a href="https://bgmer.net/terms/" target="_blank" rel="noopener noreferrer">BGMerの利用規約</a>をご覧ください。</p>
+            <h3>6. 方針の変更</h3>
+            <p>この方針は、必要に応じて見直します。変更するときは、このページの内容と制定日（改定日）を更新します。</p>
+            <p id="privContact" hidden></p>
+        </div>
+    </div>
     <button id="hdrTab" type="button" title="ヘッダーを表示します">▼ メニューを表示</button>
     <h1>🌍 太陽系周期マップ</h1>
     <div class="header">
@@ -236,6 +284,7 @@
                     <li><b>▲ ヘッダーを格納</b>：ヘッダーを隠して地図を広く表示します。上部に出る「▼ メニューを表示」を押すと元に戻ります（状態は記憶されます）。</li>
                     <li><b>🎬 オープニング</b>：最初の動画画面をもう一度見ます。動画の「スタート」（地球）を押すと地図が始まります。</li>
                     <li><b>🎵 BGM</b>：クラシック音楽1〜6を流します。「BGM」ボタンで再生・停止、曲の一覧で曲を選び、⏮ ⏭ で前後の曲に移れます。曲が終わると次の曲に進み、6の次は1に戻ります。音量はスライダーで調整します（スマートフォンでは端末の音量ボタンで調整してください）。ヘッダーを格納しても流れ続けます。</li>
+                    <li><b>🔒 プライバシー</b>：本アプリでの情報の扱いと、BGMの提供元（BGMer）のクレジットを表示します。</li>
                     <li><b>📲 インストール</b>：アプリとしてホーム画面やデスクトップに追加します。ボタンが出ない場合は、ブラウザのメニューの「ホーム画面に追加」または「アプリをインストール」を使ってください（iPhoneは共有ボタン →「ホーム画面に追加」）。</li>
                 </ul>
                 <h3>マウス操作</h3>
@@ -306,6 +355,7 @@
                 <button id="bgmNext" type="button" title="次の曲" aria-label="次の曲">⏭</button>
                 <input type="range" id="bgmVol" min="0" max="100" value="50" aria-label="BGMの音量" title="音量">
             </div>
+            <button id="privOpen" type="button" title="プライバシーポリシーを表示します">🔒 プライバシー</button>
             <button id="installBtn" title="ホーム画面やデスクトップに追加します">📲 インストール</button>
             <button id="heroOpen" title="オープニング画面をもう一度見ます">🎬 オープニング</button>
             <button id="hdrHide" title="ヘッダーを隠して地図を広く使います">▲ ヘッダーを格納</button>
@@ -1599,7 +1649,7 @@ const canvas = document.getElementById('canvas');
             }
             function setMeta() {
                 if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
-                try { navigator.mediaSession.metadata = new MediaMetadata({ title: TRACKS[idx].n, artist: '太陽系周期マップ' }); } catch (e) { }
+                try { navigator.mediaSession.metadata = new MediaMetadata({ title: TRACKS[idx].n, artist: 'BGMer' }); } catch (e) { }
             }
             function play() {
                 if (loaded !== idx) { a.src = TRACKS[idx].f; loaded = idx; }
@@ -1626,6 +1676,25 @@ const canvas = document.getElementById('canvas');
                 h('play', () => play()); h('pause', () => a.pause());
                 h('nexttrack', () => go(idx + 1, true)); h('previoustrack', () => go(idx - 1, true));
             }
+        })();
+    </script>
+
+
+    <script>
+        // プライバシーポリシーの表示
+        (function () {
+            // 運営者の連絡先を表示する場合は、ここに文字列で入れてください（例: 'お問い合わせ：example@example.com'）
+            const PRIVACY_CONTACT = '';
+            const dlg = document.getElementById('privDlg'), openB = document.getElementById('privOpen');
+            if (!dlg || !openB) return;
+            if (PRIVACY_CONTACT) { const c = document.getElementById('privContact'); c.textContent = PRIVACY_CONTACT; c.hidden = false; }
+            let last = null;
+            function open() { last = document.activeElement; dlg.classList.add('open'); dlg.querySelector('.pv-box').scrollTop = 0; document.getElementById('privClose').focus(); }
+            function close() { dlg.classList.remove('open'); if (last && last.focus) last.focus(); }
+            openB.addEventListener('click', open);
+            document.getElementById('privClose').addEventListener('click', close);
+            dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dlg.classList.contains('open')) close(); });
         })();
     </script>
 
