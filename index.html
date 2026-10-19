@@ -173,6 +173,16 @@
         body.light-mode #eventNote, body.light-mode #eventList .ev-note { color: #0066cc; }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; }
         canvas:active { cursor: grabbing; }
+        .bgm { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center;
+            padding: 3px 8px; border: 1px solid rgba(100,200,255,0.35); border-radius: 8px; background: rgba(100,200,255,0.06); }
+        .bgm select { padding: 7px 6px; border-radius: 5px; border: 1px solid rgba(100,200,255,0.5); background: rgba(10,15,44,0.6);
+            color: #fff; font-size: 12px; max-width: 230px; }
+        .bgm input[type=range] { width: 90px; accent-color: #4da3ff; vertical-align: middle; }
+        .bgm button { padding: 7px 10px; }
+        #bgmToggle.on { background: rgba(77,163,255,0.35); outline: 1px solid #4da3ff; }
+        body.light-mode .bgm { border-color: #0066cc; background: #f1f8ff; }
+        body.light-mode .bgm select { background: #fff; color: #333; border-color: #0066cc; }
+        body.light-mode #bgmToggle.on { background: #bbdefb; outline-color: #0066cc; }
         .button-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     </style>
 </head>
@@ -225,6 +235,7 @@
                 <ul>
                     <li><b>▲ ヘッダーを格納</b>：ヘッダーを隠して地図を広く表示します。上部に出る「▼ メニューを表示」を押すと元に戻ります（状態は記憶されます）。</li>
                     <li><b>🎬 オープニング</b>：最初の動画画面をもう一度見ます。動画の「スタート」（地球）を押すと地図が始まります。</li>
+                    <li><b>🎵 BGM</b>：クラシック音楽1〜6を流します。「BGM」ボタンで再生・停止、曲の一覧で曲を選び、⏮ ⏭ で前後の曲に移れます。曲が終わると次の曲に進み、6の次は1に戻ります。音量はスライダーで調整します（スマートフォンでは端末の音量ボタンで調整してください）。ヘッダーを格納しても流れ続けます。</li>
                     <li><b>📲 インストール</b>：アプリとしてホーム画面やデスクトップに追加します。ボタンが出ない場合は、ブラウザのメニューの「ホーム画面に追加」または「アプリをインストール」を使ってください（iPhoneは共有ボタン →「ホーム画面に追加」）。</li>
                 </ul>
                 <h3>マウス操作</h3>
@@ -288,6 +299,13 @@
             <button id="copyBtn">📋 コピー</button>
             <button id="shareBtn">🔗 共有</button>
             <button id="themeToggle">🌙 ダークモード</button>
+            <div class="bgm" id="bgmBox" role="group" aria-label="BGM">
+                <button id="bgmToggle" type="button" title="BGMを再生・停止します">🎵 BGM: OFF</button>
+                <select id="bgmSel" aria-label="BGMの曲"><option value="0">クラシック音楽1（BPM 100）</option><option value="1">クラシック音楽2（BPM 190）</option><option value="2">クラシック音楽3（BPM 124）</option><option value="3">クラシック音楽4（BPM 80）</option><option value="4">クラシック音楽5（BPM 105）</option><option value="5">クラシック音楽6（BPM 81）</option></select>
+                <button id="bgmPrev" type="button" title="前の曲" aria-label="前の曲">⏮</button>
+                <button id="bgmNext" type="button" title="次の曲" aria-label="次の曲">⏭</button>
+                <input type="range" id="bgmVol" min="0" max="100" value="50" aria-label="BGMの音量" title="音量">
+            </div>
             <button id="installBtn" title="ホーム画面やデスクトップに追加します">📲 インストール</button>
             <button id="heroOpen" title="オープニング画面をもう一度見ます">🎬 オープニング</button>
             <button id="hdrHide" title="ヘッダーを隠して地図を広く使います">▲ ヘッダーを格納</button>
@@ -1549,6 +1567,64 @@ const canvas = document.getElementById('canvas');
             window.addEventListener('appinstalled', () => { ib.style.display = 'none'; });
             if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
                 window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+            }
+        })();
+    </script>
+
+
+    <script>
+        // BGM（クラシック音楽1〜6）
+        (function () {
+            const TRACKS = [
+                { n: 'クラシック音楽1', f: 'bgm/classic1.mp3' }, { n: 'クラシック音楽2', f: 'bgm/classic2.mp3' },
+                { n: 'クラシック音楽3', f: 'bgm/classic3.mp3' }, { n: 'クラシック音楽4', f: 'bgm/classic4.mp3' },
+                { n: 'クラシック音楽5', f: 'bgm/classic5.mp3' }, { n: 'クラシック音楽6', f: 'bgm/classic6.mp3' }
+            ];
+            const $ = (id) => document.getElementById(id);
+            const sg = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+            const ss = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } };
+            const btn = $('bgmToggle'), sel = $('bgmSel'), vol = $('bgmVol');
+            if (!btn || !sel || !vol) return;
+            const a = new Audio();
+            a.preload = 'none';
+            let idx = parseInt(sg('bgmIdx'), 10); if (!(idx >= 0 && idx < TRACKS.length)) idx = 0;
+            const v0 = parseInt(sg('bgmVol'), 10); vol.value = (v0 >= 0 && v0 <= 100) ? v0 : 50;
+            a.volume = vol.value / 100;
+            sel.value = String(idx);
+            let loaded = -1;
+            function label(state) {
+                btn.classList.toggle('on', state === 'on');
+                btn.textContent = state === 'on' ? '🎵 BGM: ON' : state === 'err' ? '🎵 再生できません' : '🎵 BGM: OFF';
+                btn.setAttribute('aria-pressed', state === 'on' ? 'true' : 'false');
+            }
+            function setMeta() {
+                if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+                try { navigator.mediaSession.metadata = new MediaMetadata({ title: TRACKS[idx].n, artist: '太陽系周期マップ' }); } catch (e) { }
+            }
+            function play() {
+                if (loaded !== idx) { a.src = TRACKS[idx].f; loaded = idx; }
+                setMeta();
+                const pr = a.play();
+                if (pr && pr.catch) pr.catch(() => { label('err'); });
+            }
+            function go(n, keep) {
+                idx = (n + TRACKS.length) % TRACKS.length;
+                sel.value = String(idx); ss('bgmIdx', idx);
+                if (keep) play(); else { a.pause(); loaded = -1; a.removeAttribute('src'); label('off'); }
+            }
+            btn.addEventListener('click', () => { if (a.paused) play(); else a.pause(); });
+            sel.addEventListener('change', () => go(parseInt(sel.value, 10), !a.paused));
+            $('bgmPrev').addEventListener('click', () => go(idx - 1, !a.paused));
+            $('bgmNext').addEventListener('click', () => go(idx + 1, !a.paused));
+            vol.addEventListener('input', () => { a.volume = vol.value / 100; ss('bgmVol', vol.value); });
+            a.addEventListener('playing', () => label('on'));
+            a.addEventListener('pause', () => { if (!a.ended) label('off'); });
+            a.addEventListener('ended', () => go(idx + 1, true));
+            a.addEventListener('error', () => { if (a.src) { label('err'); } });
+            if ('mediaSession' in navigator) {
+                const h = (n, f) => { try { navigator.mediaSession.setActionHandler(n, f); } catch (e) { } };
+                h('play', () => play()); h('pause', () => a.pause());
+                h('nexttrack', () => go(idx + 1, true)); h('previoustrack', () => go(idx - 1, true));
             }
         })();
     </script>
