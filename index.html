@@ -1562,6 +1562,7 @@ const canvas = document.getElementById('canvas');
             const hero = document.getElementById('hero');
             const hv = document.getElementById('heroVideo');
             const startBtn = document.getElementById('heroStart');
+            let framed = false;
             function safeGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
             function safeSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { } }
             function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -1569,28 +1570,33 @@ const canvas = document.getElementById('canvas');
             function hideHero() {
                 hero.classList.add('hide');
                 try { hv.pause(); } catch (e) { }
-                safeSet('heroSeen', '1');
             }
             function showHero() {
                 hero.classList.remove('hide');
                 startBtn.classList.remove('fallback');
                 startBtn.textContent = 'スタート';
+                hero.classList.remove('playing'); framed = false;
                 try { hv.currentTime = 0; const pr = hv.play(); if (pr && pr.catch) pr.catch(fallback); } catch (e) { fallback(); }
                 setTimeout(() => { if (!hero.classList.contains('hide') && !hero.classList.contains('playing')) fallback(); }, 3000);
             }
             function fallback() {   // 自動再生できない場合は、静止画とボタンを表示
-                hero.classList.remove('playing');
+                hero.classList.remove('playing'); framed = false;
                 startBtn.classList.add('fallback');
                 startBtn.textContent = '▶ スタート';
             }
-            hv.addEventListener('playing', () => hero.classList.add('playing'));
+            // 動画の最初の1コマが描画されてから静止画を消す(その前に消すと画面が一瞬空になるため)
+            function showVideo() { if (framed) return; framed = true; hero.classList.add('playing'); }
+            hv.addEventListener('playing', () => {
+                if (hv.requestVideoFrameCallback) { hv.requestVideoFrameCallback(() => showVideo()); setTimeout(showVideo, 800); }
+                else if (hv.currentTime > 0.05) showVideo();
+            });
+            hv.addEventListener('timeupdate', () => { if (!framed && hv.currentTime > 0.05 && !hv.paused) showVideo(); });
             hv.addEventListener('error', fallback);
             startBtn.addEventListener('click', hideHero);
             document.getElementById('heroSkip').addEventListener('click', hideHero);
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !hero.classList.contains('hide')) hideHero(); });
             document.getElementById('heroOpen').addEventListener('click', () => { closePanels(null); showHero(); });
-            if (safeGet('heroSeen')) hero.classList.add('hide');
-            else { const pr = hv.play(); if (pr && pr.catch) pr.catch(fallback); }
+            { const pr = hv.play(); if (pr && pr.catch) pr.catch(fallback); }
             setTimeout(() => { if (!hero.classList.contains('hide') && !hero.classList.contains('playing')) fallback(); }, 3000);
 
             // ヘッダー格納
