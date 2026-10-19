@@ -189,6 +189,12 @@
         #privDlg .pv-close { position: sticky; top: 0; float: right; margin: 0 0 6px 8px; }
         body.light-mode #privDlg .pv-box { background: #fff; color: #222; border-color: #0066cc; }
         body.light-mode #privDlg h3, body.light-mode #privDlg a { color: #0066cc; }
+        .spd { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid rgba(100,200,255,0.35);
+            border-radius: 8px; background: rgba(100,200,255,0.06); font-size: 12px; }
+        .spd input[type=range] { width: 130px; accent-color: #4da3ff; vertical-align: middle; }
+        .spd-e { opacity: 0.7; font-size: 11px; }
+        #speedOut { min-width: 8.2em; text-align: left; font-variant-numeric: tabular-nums; }
+        body.light-mode .spd { border-color: #0066cc; background: #f1f8ff; color: #0066cc; }
         .bgm select { padding: 7px 6px; border-radius: 5px; border: 1px solid rgba(100,200,255,0.5); background: rgba(10,15,44,0.6);
             color: #fff; font-size: 12px; max-width: 230px; }
         .bgm input[type=range] { width: 90px; accent-color: #4da3ff; vertical-align: middle; }
@@ -273,7 +279,7 @@
                     <li><b>🌙 月相</b>：月ごとのカレンダー。◀ ▶ で月を移動し、日付を押すとその日に移動します。右上の月のアイコンを押しても開きます。数字は月齢です。</li>
                     <li><b>📏 実寸</b>：天体の大きさを実際の比率（太陽を基準）にします。惑星は点のように小さくなるので、拡大して見てください。「☀️ 太陽中心」をOFFにして惑星を中心にしても同じ比率のままで、拡大した分だけ連続して大きくなります（ホイールで最大900倍）。</li>
                     <li><b>〰️ 軌道</b>：惑星と月の軌道線の表示を切り替えます。</li>
-                    <li><b>▶ 再生</b>／<b>⏩ 速度</b>：日付を自動で進めます。速度は「1年＝1分・30秒・15秒・5秒・1秒」の5段階で、押すたびに切り替わります。</li>
+                    <li><b>▶ 再生</b>／<b>⏩ 速度</b>：日付を自動で進めます。速度は、ゲージ（スライダー）で、「1年＝1時間（いちばん遅い）」から「1年＝30秒（いちばん速い）」まで、なめらかに調整できます。左へ動かすほど遅く、右へ動かすほど速くなります。</li>
                     <li><b>☀️ 太陽中心</b>：OFFにすると、下に出る惑星・月のボタンで見たい天体を中心にできます。</li>
                     <li><b>🧭 XY自由移動</b>：ドラッグの動作（回転／移動）を入れ替えます。</li>
                     <li><b>📋 コピー</b>／<b>🔗 共有</b>：このページのリンクをコピー、または共有します（共有はお使いの環境が対応している場合のみ）。</li>
@@ -341,7 +347,13 @@
             <button id="realSizeToggle" title="天体の大きさを実際の比率にします（太陽を基準）。惑星は点のように小さくなるので拡大して見てください">📏 実寸: OFF</button>
             <button id="orbitToggle" title="惑星と月の軌道線の表示を切り替えます">〰️ 軌道: ON</button>
             <button id="playToggle" title="再生ON/OFF">▶ 再生: OFF</button>
-            <button id="speedBtn" title="再生速度を切り替えます（5段階）">⏩ 速度: 1年=1分</button>
+            <div class="spd" id="spdBox" role="group" aria-label="再生速度">
+                <span class="spd-t">⏩ 速度</span>
+                <span class="spd-e">遅</span>
+                <input type="range" id="speedRange" min="0" max="1000" step="1" value="855" aria-label="再生速度（左ほど遅く、右ほど速い）" title="左:遅い（1年＝1時間） ／ 右:速い（1年＝30秒）">
+                <span class="spd-e">速</span>
+                <output id="speedOut" for="speedRange">1年＝1分</output>
+            </div>
             <button id="axisToggle">🧭 XY自由移動: OFF</button>
             <button id="centerToggle">☀️ 太陽中心: ON</button>
             <button id="resetView">📍 標準表示</button>
@@ -775,16 +787,34 @@ const canvas = document.getElementById('canvas');
             eventNote.textContent = '🔭 ' + str.replace(/-/g, '/') + '　' + type.label + '：' + ev.text;
         }
 
-        // 再生: 地球の1年(365.25日)を実時間1分で進める
-        const SPEEDS = [[60,'1分'],[30,'30秒'],[15,'15秒'],[5,'5秒'],[1,'1秒']];
-        let speedIdx = 0;
-        let DAYS_PER_SEC = 365.25 / SPEEDS[0][0];
-        const speedBtn = document.getElementById('speedBtn');
-        speedBtn.addEventListener('click', () => {
-            speedIdx = (speedIdx + 1) % SPEEDS.length;
-            DAYS_PER_SEC = 365.25 / SPEEDS[speedIdx][0];
-            speedBtn.textContent = '⏩ 速度: 1年=' + SPEEDS[speedIdx][1];
-        });
+        // 再生速度: 地球の1年(365.25日)を、実時間で「最短30秒 〜 最長1時間」のあいだで、ゲージ(スライダー)で調整する
+        // ゲージは対数目盛り（左=遅い:1時間、右=速い:30秒）。表示と実際の速さが一致するよう、秒数は表示の刻みにそろえる。
+        const SPD_MAX_S = 3600, SPD_MIN_S = 30;
+        const speedRange = document.getElementById('speedRange');
+        const speedOut = document.getElementById('speedOut');
+        function spdSeconds(pos) {
+            let t = SPD_MAX_S * Math.pow(SPD_MIN_S / SPD_MAX_S, pos / 1000);
+            const step = t < 60 ? 1 : (t < 600 ? 5 : 60);
+            t = Math.round(t / step) * step;
+            return Math.min(SPD_MAX_S, Math.max(SPD_MIN_S, t));
+        }
+        function spdLabel(t) {
+            if (t >= 3600) return '1時間';
+            if (t < 60) return t + '秒';
+            const m = Math.floor(t / 60), r = t % 60;
+            return m + '分' + (r ? r + '秒' : '');
+        }
+        let DAYS_PER_SEC = 365.25 / 60;
+        function applySpeed(save) {
+            const t = spdSeconds(+speedRange.value);
+            DAYS_PER_SEC = 365.25 / t;
+            speedOut.textContent = '1年＝' + spdLabel(t);
+            speedRange.setAttribute('aria-valuetext', '1年＝' + spdLabel(t));
+            if (save) { try { localStorage.setItem('spdPos', speedRange.value); } catch (e) { } }
+        }
+        try { const sv = parseInt(localStorage.getItem('spdPos'), 10); if (sv >= 0 && sv <= 1000) speedRange.value = sv; } catch (e) { }
+        speedRange.addEventListener('input', () => applySpeed(true));
+        applySpeed(false);
         let playing = false, lastFrameTs = 0, lastShownDay = '';
         const playToggle = document.getElementById('playToggle');
         function setPlaying(on) {
