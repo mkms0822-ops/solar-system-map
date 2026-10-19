@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>太陽系周期マップ</title>
+    <meta name="theme-color" content="#0a0f2c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="太陽系マップ">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
@@ -62,6 +70,28 @@
         body.light-mode #helpPanel h2 { color: #a06b00; }
         body.light-mode #helpPanel h3 { color: #0066cc; }
         body.light-mode #helpPanel .hp-note { color: #556; }
+        /* ---- ヒーロー（オープニング）画面 ---- */
+        #hero { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at center, #0b2a5c 0%, #02040c 100%); transition: opacity 0.6s ease, visibility 0.6s; }
+        #hero.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+        #hero .hero-stage { position: relative; width: min(100vw, 160vh); aspect-ratio: 1728 / 1080; }
+        #hero video, #hero .hero-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        #hero .hero-poster { transition: opacity 0.4s; }
+        #hero.playing .hero-poster { opacity: 0; }
+        #heroStart { position: absolute; left: 49.7%; top: 66.8%; width: 13%; aspect-ratio: 1; transform: translate(-50%, -50%);
+            border-radius: 50%; border: 0; background: transparent; padding: 0; cursor: pointer; font-size: 0; }
+        #heroStart:focus-visible { outline: 3px solid #f5d98a; outline-offset: 2px; }
+        #heroStart.fallback { width: auto; aspect-ratio: auto; padding: 10px 28px; border-radius: 999px; font-size: 18px; font-weight: 700;
+            background: rgba(100,200,255,0.25); border: 1px solid rgba(100,200,255,0.8); color: #fff; }
+        #heroSkip { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); z-index: 2;
+            padding: 6px 14px; font-size: 13px; background: rgba(0,0,0,0.45); }
+        /* ---- ヘッダー格納 ---- */
+        body.hdr-off > h1, body.hdr-off > .header { display: none; }
+        #hdrTab { display: none; position: fixed; top: max(6px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 20;
+            padding: 5px 16px; font-size: 12px; border-radius: 0 0 10px 10px; background: rgba(10,15,44,0.85); backdrop-filter: blur(3px); }
+        body.hdr-off #hdrTab { display: block; }
+        body.light-mode #hdrTab { background: rgba(255,255,255,0.9); }
+        #installBtn { display: none; }
         #periodPanel.open, #eventPanel.open { max-height: 460px; opacity: 1; }
         #moonPanel.open { max-height: 80vh; opacity: 1; overflow-y: auto; }
         #moonPanel { min-width: 340px; max-width: 94vw; padding: 10px 10px 12px; }
@@ -147,6 +177,17 @@
     </style>
 </head>
 <body>
+    <section id="hero" aria-label="オープニング">
+        <div class="hero-stage">
+            <img class="hero-poster" src="poster.jpg" alt="太陽系周期マップ">
+            <video id="heroVideo" muted playsinline preload="auto" poster="poster.jpg" aria-hidden="true">
+                <source src="hero.mp4" type="video/mp4">
+            </video>
+            <button id="heroStart" type="button" aria-label="スタート">スタート</button>
+        </div>
+        <button id="heroSkip" type="button">スキップ ▶</button>
+    </section>
+    <button id="hdrTab" type="button" title="ヘッダーを表示します">▼ メニューを表示</button>
     <h1>🌍 太陽系周期マップ</h1>
     <div class="header">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -179,6 +220,12 @@
                     <li><b>🧭 XY自由移動</b>：ドラッグの動作（回転／移動）を入れ替えます。</li>
                     <li><b>📋 コピー</b>／<b>🔗 共有</b>：このページのリンクをコピー、または共有します（共有はお使いの環境が対応している場合のみ）。</li>
                     <li><b>🌙 ダークモード</b>：画面の明るさ（ダーク／ライト）を切り替えます。</li>
+                </ul>
+                <h3>画面を広く使う・インストール</h3>
+                <ul>
+                    <li><b>▲ ヘッダーを格納</b>：ヘッダーを隠して地図を広く表示します。上部に出る「▼ メニューを表示」を押すと元に戻ります（状態は記憶されます）。</li>
+                    <li><b>🎬 オープニング</b>：最初の動画画面をもう一度見ます。動画の「スタート」（地球）を押すと地図が始まります。</li>
+                    <li><b>📲 インストール</b>：アプリとしてホーム画面やデスクトップに追加します。ボタンが出ない場合は、ブラウザのメニューの「ホーム画面に追加」または「アプリをインストール」を使ってください（iPhoneは共有ボタン →「ホーム画面に追加」）。</li>
                 </ul>
                 <h3>マウス操作</h3>
                 <ul>
@@ -241,6 +288,9 @@
             <button id="copyBtn">📋 コピー</button>
             <button id="shareBtn">🔗 共有</button>
             <button id="themeToggle">🌙 ダークモード</button>
+            <button id="installBtn" title="ホーム画面やデスクトップに追加します">📲 インストール</button>
+            <button id="heroOpen" title="オープニング画面をもう一度見ます">🎬 オープニング</button>
+            <button id="hdrHide" title="ヘッダーを隠して地図を広く使います">▲ ヘッダーを格納</button>
         </div>
     </div>
     <div id="eventNote" style="display:none; text-align:center;"></div>
@@ -1439,6 +1489,69 @@ const canvas = document.getElementById('canvas');
         }
 
         animate();
+
+        // ---- ヒーロー画面 / ヘッダー格納 / インストール ----
+        (function () {
+            const hero = document.getElementById('hero');
+            const hv = document.getElementById('heroVideo');
+            const startBtn = document.getElementById('heroStart');
+            function safeGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+            function safeSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { } }
+            function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+            function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+            function hideHero() {
+                hero.classList.add('hide');
+                try { hv.pause(); } catch (e) { }
+                safeSet('heroSeen', '1');
+            }
+            function showHero() {
+                hero.classList.remove('hide');
+                startBtn.classList.remove('fallback');
+                startBtn.textContent = 'スタート';
+                try { hv.currentTime = 0; const pr = hv.play(); if (pr && pr.catch) pr.catch(fallback); } catch (e) { fallback(); }
+                setTimeout(() => { if (!hero.classList.contains('hide') && !hero.classList.contains('playing')) fallback(); }, 3000);
+            }
+            function fallback() {   // 自動再生できない場合は、静止画とボタンを表示
+                hero.classList.remove('playing');
+                startBtn.classList.add('fallback');
+                startBtn.textContent = '▶ スタート';
+            }
+            hv.addEventListener('playing', () => hero.classList.add('playing'));
+            hv.addEventListener('error', fallback);
+            startBtn.addEventListener('click', hideHero);
+            document.getElementById('heroSkip').addEventListener('click', hideHero);
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !hero.classList.contains('hide')) hideHero(); });
+            document.getElementById('heroOpen').addEventListener('click', () => { closePanels(null); showHero(); });
+            if (safeGet('heroSeen')) hero.classList.add('hide');
+            else { const pr = hv.play(); if (pr && pr.catch) pr.catch(fallback); }
+            setTimeout(() => { if (!hero.classList.contains('hide') && !hero.classList.contains('playing')) fallback(); }, 3000);
+
+            // ヘッダー格納
+            function setHeader(off) {
+                document.body.classList.toggle('hdr-off', off);
+                lsSet('hdrOff', off ? '1' : '0');
+                closePanels(null);
+                requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+            }
+            document.getElementById('hdrHide').addEventListener('click', () => setHeader(true));
+            document.getElementById('hdrTab').addEventListener('click', () => setHeader(false));
+            if (lsGet('hdrOff') === '1') { document.body.classList.add('hdr-off'); requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); }
+
+            // インストール
+            let deferred = null;
+            const ib = document.getElementById('installBtn');
+            window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; ib.style.display = 'inline-block'; });
+            ib.addEventListener('click', async () => {
+                if (!deferred) return;
+                deferred.prompt();
+                try { await deferred.userChoice; } catch (e) { }
+                deferred = null; ib.style.display = 'none';
+            });
+            window.addEventListener('appinstalled', () => { ib.style.display = 'none'; });
+            if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+                window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+            }
+        })();
     </script>
 
 </body>
