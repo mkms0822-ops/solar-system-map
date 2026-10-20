@@ -173,9 +173,13 @@
         body.light-mode #eventNote, body.light-mode #eventList .ev-note { color: #0066cc; }
         /* スマホ: 操作パネルが画面を占領してしまうので、パネルは中で縦スクロール、地図は最低でも画面の約半分を確保 */
         @media (max-width: 820px) {
-            .header { max-height: 38vh; max-height: 38dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-                touch-action: pan-y; gap: 10px; padding: 10px 12px; }
-            .canvas-container { min-height: 52vh; min-height: 52dvh; }
+            /* メニューを出したときは、画面の上から33%だけ使う(見出し+ボタン類の合計) */
+            body > h1 { font-size: 16px; line-height: 28px; height: 28px; padding: 0 10px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .header { height: calc(33vh - 28px); height: calc(33dvh - 28px); max-height: calc(33vh - 28px); max-height: calc(33dvh - 28px);
+                overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;
+                align-content: flex-start; gap: 6px; padding: 6px 8px; }
+            .header button { padding: 6px 9px; }
+            .canvas-container { min-height: 0; }
         }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; }
         canvas:active { cursor: grabbing; }
@@ -1701,7 +1705,7 @@ const canvas = document.getElementById('canvas');
             }
             document.getElementById('hdrHide').addEventListener('click', () => setHeader(true));
             document.getElementById('hdrTab').addEventListener('click', () => setHeader(false));
-            if (lsGet('hdrOff') === '1') { document.body.classList.add('hdr-off'); requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); }
+            if (lsGet('hdrOff') === '1' || (lsGet('hdrOff') === null && window.matchMedia('(max-width: 820px)').matches)) { document.body.classList.add('hdr-off'); requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); }
 
             // インストール
             let deferred = null;
