@@ -1,5 +1,5 @@
 // 太陽系周期マップ Service Worker（アプリ本体をオフラインでも開けるようにします）
-const CACHE = 'solar-map-v6';
+const CACHE = 'solar-map-v8';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './poster.jpg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => {

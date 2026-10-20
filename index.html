@@ -15,6 +15,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+        @supports (height: 100dvh) { html, body { height: 100dvh; } }
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #001a4d 0%, #0a0a1a 100%);
@@ -387,6 +388,7 @@
     <div id="focusBar" class="button-group" style="display:none; margin:6px 10px;"></div>
     <div class="canvas-container">
         <canvas id="canvas"></canvas>
+        <div id="verTag" style="position:absolute;left:6px;bottom:4px;font-size:10px;opacity:.45;pointer-events:none;">v8</div>
         <div id="profileCard"></div>
         <div id="moonWidget" title="月相（クリックで日ごとの月相を開く）">
             <canvas id="moonCanvas" width="120" height="120"></canvas>
@@ -461,14 +463,20 @@ const canvas = document.getElementById('canvas');
             themeToggle.textContent = '☀️ ライトモード';
         }
 
+        let cssW = 1, cssH = 1;   // 画面上の大きさ(CSSピクセル)。canvas.width は実ピクセルなので描画座標には使わない
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
+            cssW = Math.max(1, rect.width); cssH = Math.max(1, rect.height);
             canvas.width = rect.width * window.devicePixelRatio;
             canvas.height = rect.height * window.devicePixelRatio;
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeCanvas);
+        if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
+        window.addEventListener('load', () => setTimeout(resizeCanvas, 100));
 
         // 惑星データ
         const planets = [
@@ -1357,8 +1365,8 @@ const canvas = document.getElementById('canvas');
         const stars = [];
         for (let i = 0; i < 200; i++) {
             stars.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
+                x: Math.random() * cssW,
+                y: Math.random() * cssH,
                 radius: Math.random() * 1.5,
                 opacity: Math.random() * 0.7 + 0.3
             });
@@ -1462,15 +1470,15 @@ const canvas = document.getElementById('canvas');
                 }
                 lastFrameTs = ts || performance.now();
             }
-            const centerX = canvas.width / 2 + panX;
-            const centerY = canvas.height / 2 + panY;
+            const centerX = cssW / 2 + panX;
+            const centerY = cssH / 2 + panY;
 
             rotation.x += (targetRotation.x - rotation.x) * 0.1;
             rotation.y += (targetRotation.y - rotation.y) * 0.1;
 
             const bgColor = isDarkMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(200, 220, 240, 0.05)';
             ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, cssW, cssH);
 
             drawStars();
 
@@ -1484,7 +1492,7 @@ const canvas = document.getElementById('canvas');
             if (shootingStarTime < 0.15) {
                 const progress = shootingStarTime / 0.15;
                 const opacity = Math.sin(progress * Math.PI) * 0.8;
-                drawShootingStar(-50, -50, canvas.width + 50, canvas.height + 50, progress, opacity);
+                drawShootingStar(-50, -50, cssW + 50, cssH + 50, progress, opacity);
             }
 
             const timeMs = useCustomDate ? selectedDate : Date.now();
